@@ -28,13 +28,14 @@ def _batch(self, chunk):
     path = os.path.join(self.FLAGS.dataset, jpg)
 
     # we support all kinds of images:
-    extensions = [".jpg", ".JPG", ".jpeg", ".gif", ".bmp", ".png", ""]
+    extensions = [".jpg", ".JPG", ".jpeg", ".bmp", ".png", ""]
     for extension in extensions:
         try:
             img = self.preprocess(path + extension, allobj)
             break
         except AttributeError as error:
             if len(extension) == 0:
+                print(path)
                 raise error
 
     # Calculate regression target
