@@ -29,6 +29,10 @@ PATH_ANNOTATIONS_TEST_1 = "../data/images/test-annotations-1"
 PATH_ANNOTATIONS_TEST_2 = "../data/images/test-annotations-2"
 PATH_ANNOTATIONS_TEST_3 = "../data/images/test-annotations-3"
 
+PATH_LABELS_1 = "labels.txt"
+PATH_LABELS_2 = "labels-2.txt"
+PATH_LABELS_3 = "labels-3.txt"
+
 
 class Model(object):
     """ The abstract base of our models """
@@ -57,6 +61,9 @@ class Model(object):
     def get_weights(self):
         return PATH_TINY_YOLO_VOC_WEIGHTS
 
+    def get_labels(self):
+        raise NotImplementedError("Should have implemented this")
+
 
 class Model1(Model):
     """ The first model """
@@ -81,6 +88,9 @@ class Model1(Model):
 
     def get_config(self):
         return PATH_CFG_TINY_YOLO_NEW_1
+
+    def get_labels(self):
+        return PATH_LABELS_1
 
 
 class Model2(Model):
@@ -107,6 +117,9 @@ class Model2(Model):
     def get_config(self):
         return PATH_CFG_TINY_YOLO_NEW_2
 
+    def get_labels(self):
+        return PATH_LABELS_2
+
 
 class Model3(Model):
     """ The third model """
@@ -131,3 +144,6 @@ class Model3(Model):
 
     def get_config(self):
         return PATH_CFG_TINY_YOLO_NEW_3
+
+    def get_labels(self):
+        return PATH_LABELS_3
