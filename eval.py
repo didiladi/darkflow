@@ -86,7 +86,7 @@ def get_all_checkpoints_for_model(model):
 
         if prefix in file and ".meta" in file:
             number = file.split(prefix)[1].split(".meta")[0][1:]
-            result.append(number)
+            result.append(int(number))
 
     result.sort()
     return result
@@ -95,21 +95,23 @@ def get_all_checkpoints_for_model(model):
 if __name__ == '__main__':
 
     model = Model1()
+    start = 1500
 
     ckpts = get_all_checkpoints_for_model(model)
     labels = read_labels(model.get_labels())
     data = pd.DataFrame(data=None, index=labels, dtype=np.float64)
 
     for ckpt in ckpts:
+        if ckpt > start:
 
-        tp, count, tp_classes, count_classes = predict(model, int(ckpt))
-        series = pd.Series(dtype=np.float64)
+            tp, count, tp_classes, count_classes = predict(model, ckpt)
+            series = pd.Series(dtype=np.float64)
 
-        for label in labels:
-            accuracy = tp_classes[label] / count_classes[label]
-            series = series.set_value(label, accuracy)
+            for label in labels:
+                accuracy = tp_classes[label] / count_classes[label]
+                series = series.set_value(label, accuracy)
 
-        data[ckpt] = series
+            data[str(ckpt)] = series
 
     print(data)
     data.to_csv(model.get_config() + str(time.time()) +
