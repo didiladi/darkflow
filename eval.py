@@ -9,6 +9,7 @@ import subprocess
 import os
 import time
 import json
+import os.path
 
 
 def predict(model, ckpt):
@@ -70,13 +71,17 @@ def read_labels(file_name):
     return result
 
 
-def get_all_checkpoints_for_model(model):
+def get_ckpt_prefix(model):
 
     config_path = model.get_config()
 
     # it has this format: 'cfg/tiny-yolo-voc-new-1.cfg'
-    prefix = config_path.split("/")[1].split(".")[0]
+    return config_path.split("/")[1].split(".")[0]
 
+
+def get_all_checkpoints_for_model(model):
+
+    prefix = get_ckpt_prefix(model)
     all_ckpt_files = os.listdir("ckpt")
     result = []
 
@@ -92,11 +97,44 @@ def get_all_checkpoints_for_model(model):
     return result
 
 
-def process_model(model, start_ckpt=0):
+def get_ckpt_start(model):
+
+    prefix = get_ckpt_prefix(model)
+
+    try:
+
+        label_file = open("cfg/" + prefix + ".ckpt-start", 'r')
+        lines = label_file.readlines()
+        label_file.close()
+
+        return int(lines[0])
+
+    except IOError:
+        return 0
+
+    return 0
+
+
+def write_ckpt_start(model, ckpt):
+
+    prefix = get_ckpt_prefix(model)
+
+    text_file = open("cfg/" + prefix + ".ckpt-start", "w")
+    text_file.write(str(ckpt))
+    text_file.close()
+
+
+def process_model(model):
 
     ckpts = get_all_checkpoints_for_model(model)
     labels = read_labels(model.get_labels())
-    data = pd.DataFrame(data=None, index=labels, dtype=np.float64)
+    start_ckpt = get_ckpt_start(model)
+    file_path = model.get_config() + ".csv"
+
+    if os.path.isfile(file_path):
+        data = pd.read_csv(file_path, sep=',', encoding='utf-8')
+    else:
+        data = pd.DataFrame(data=None, index=labels, dtype=np.float64)
 
     for ckpt in ckpts:
         if ckpt > start_ckpt:
@@ -109,14 +147,14 @@ def process_model(model, start_ckpt=0):
                 series = series.set_value(label, accuracy)
 
             data[str(ckpt)] = series
+            write_ckpt_start(model, ckpt)
 
-    print(data)
-    data.to_csv(model.get_config() + str(time.time()) +
-                ".csv", sep=',', encoding='utf-8')
+            data.to_csv(file_path, sep=',', encoding='utf-8')
+            print(data)
 
 
 if __name__ == '__main__':
 
-    process_model(Model1(), 4750)
+    process_model(Model1())  # 4750
     process_model(Model2())
     process_model(Model3())
