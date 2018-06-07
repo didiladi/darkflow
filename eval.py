@@ -92,17 +92,14 @@ def get_all_checkpoints_for_model(model):
     return result
 
 
-if __name__ == '__main__':
-
-    model = Model1()
-    start = 1500
+def process_model(model, start_ckpt=0):
 
     ckpts = get_all_checkpoints_for_model(model)
     labels = read_labels(model.get_labels())
     data = pd.DataFrame(data=None, index=labels, dtype=np.float64)
 
     for ckpt in ckpts:
-        if ckpt > start:
+        if ckpt > start_ckpt:
 
             tp, count, tp_classes, count_classes = predict(model, ckpt)
             series = pd.Series(dtype=np.float64)
@@ -116,3 +113,10 @@ if __name__ == '__main__':
     print(data)
     data.to_csv(model.get_config() + str(time.time()) +
                 ".csv", sep=',', encoding='utf-8')
+
+
+if __name__ == '__main__':
+
+    process_model(Model1(), 4750)
+    process_model(Model2())
+    process_model(Model3())
