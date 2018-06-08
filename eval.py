@@ -133,7 +133,7 @@ def process_model(model):
 
     if os.path.isfile(file_path):
         data = pd.read_csv(file_path, sep=',',
-                           encoding='utf-8', index=False, index_col=0)
+                           encoding='utf-8', index_col=0)
     else:
         data = pd.DataFrame(data=None, index=labels, dtype=np.float64)
 
