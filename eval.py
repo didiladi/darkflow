@@ -16,6 +16,7 @@ def predict(model, ckpt):
 
     options = {
         "model": model.get_config(),
+        "labels": model.get_labels(),
         "load": ckpt,
         "threshold": 0.1
     }
