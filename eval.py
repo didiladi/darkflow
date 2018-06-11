@@ -33,24 +33,31 @@ def predict(model, ckpt):
     for file in files:
         if "." in file:
 
-            imgcv = cv2.imread(model.get_path_for_test_images() + "/" + file)
-            result = tfnet.return_predict(imgcv)
-            print(result)
+            try:
 
-            expected_label = file.split("_")[0]
+                imgcv = cv2.imread(
+                    model.get_path_for_test_images() + "/" + file)
 
-            if not expected_label in tp_classes:
-                tp_classes[expected_label] = 0
-                count_classes[expected_label] = 0
+                result = tfnet.return_predict(imgcv)
+                print(result)
 
-            count = count + 1
-            count_classes[expected_label] = count_classes[expected_label] + 1
+                expected_label = file.split("_")[0]
 
-            for obj in result:
-                if obj["label"] == expected_label:
-                    tp = tp + 1
-                    tp_classes[expected_label] = tp_classes[expected_label] + 1
-                    break
+                if not expected_label in tp_classes:
+                    tp_classes[expected_label] = 0
+                    count_classes[expected_label] = 0
+
+                count = count + 1
+                count_classes[expected_label] = count_classes[expected_label] + 1
+
+                for obj in result:
+                    if obj["label"] == expected_label:
+                        tp = tp + 1
+                        tp_classes[expected_label] = tp_classes[expected_label] + 1
+                        break
+
+            except AssertionError:
+                continue
 
     return tp, count, tp_classes, count_classes
 
@@ -142,6 +149,7 @@ def process_model(model):
         if ckpt > start_ckpt:
 
             tp, count, tp_classes, count_classes = predict(model, ckpt)
+
             series = pd.Series(dtype=np.float64)
 
             for label in labels:
