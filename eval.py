@@ -28,11 +28,11 @@ def predict(model, ckpt):
     tp_classes = {}
     count_classes = {}
 
-    files = os.listdir(model.get_path_for_dev_images())
+    files = os.listdir(model.get_path_for_test_images())
     for file in files:
         if "." in file:
 
-            imgcv = cv2.imread(model.get_path_for_dev_images() + "/" + file)
+            imgcv = cv2.imread(model.get_path_for_test_images() + "/" + file)
             result = tfnet.return_predict(imgcv)
             print(result)
 
