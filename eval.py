@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import pandas as pd
 from enum import Enum
-from models import *
+from models import Model
 import subprocess
 import os
 import time
@@ -62,34 +62,9 @@ def predict(model, ckpt):
     return tp, count, tp_classes, count_classes
 
 
-def read_labels(file_name):
-    """ Loads the labels of the imagenet synsets which should be downloaded """
-
-    print("Reading desired labels")
-
-    label_file = open(file_name, 'r')
-    lines = label_file.readlines()
-    result = []
-
-    for line in lines:
-        result.append(line.rstrip('\n'))
-
-    label_file.close()
-
-    return result
-
-
-def get_ckpt_prefix(model):
-
-    config_path = model.get_config()
-
-    # it has this format: 'cfg/tiny-yolo-voc-new-1.cfg'
-    return config_path.split("/")[1].split(".")[0]
-
-
 def get_all_checkpoints_for_model(model):
 
-    prefix = get_ckpt_prefix(model)
+    prefix = model.get_ckpt_prefix()
     all_ckpt_files = os.listdir("ckpt")
     result = []
 
@@ -105,45 +80,12 @@ def get_all_checkpoints_for_model(model):
     return result
 
 
-def get_ckpt_start(model):
-
-    prefix = get_ckpt_prefix(model)
-
-    try:
-
-        label_file = open("cfg/" + prefix + ".ckpt-start", 'r')
-        lines = label_file.readlines()
-        label_file.close()
-
-        return int(lines[0])
-
-    except IOError:
-        return 0
-
-    return 0
-
-
-def write_ckpt_start(model, ckpt):
-
-    prefix = get_ckpt_prefix(model)
-
-    text_file = open("cfg/" + prefix + ".ckpt-start", "w")
-    text_file.write(str(ckpt))
-    text_file.close()
-
-
 def process_model(model):
 
+    data = model.get_evaluation_data()
     ckpts = get_all_checkpoints_for_model(model)
-    labels = read_labels(model.get_labels())
-    start_ckpt = get_ckpt_start(model)
-    file_path = model.get_config() + ".csv"
-
-    if os.path.isfile(file_path):
-        data = pd.read_csv(file_path, sep=',',
-                           encoding='utf-8', index_col=0)
-    else:
-        data = pd.DataFrame(data=None, index=labels, dtype=np.float64)
+    labels = model.read_labels()
+    start_ckpt = model.get_ckpt_start()
 
     for ckpt in ckpts:
         if ckpt > start_ckpt:
@@ -157,9 +99,9 @@ def process_model(model):
                 series = series.set_value(label, accuracy)
 
             data[str(ckpt)] = series
-            write_ckpt_start(model, ckpt)
+            model.write_ckpt_start(ckpt)
 
-            data.to_csv(file_path, sep=',', encoding='utf-8')
+            model.save_evaluation_data(data)
             print(data)
 
 
