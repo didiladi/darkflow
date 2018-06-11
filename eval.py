@@ -156,6 +156,5 @@ def process_model(model):
 
 if __name__ == '__main__':
 
-    process_model(Model1())  # 4750
-    process_model(Model2())
-    process_model(Model3())
+    for i in range(0, 9):
+        process_model(Model(i+1))
