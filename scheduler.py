@@ -52,7 +52,7 @@ def is_model_finished(data, current_ckpt):
         return False
 
     for value in data[str(current_ckpt)]:
-        if value < 0.7:
+        if value < 0.7 or value > 0.99:
             return False
 
     return True
