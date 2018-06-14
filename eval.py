@@ -140,7 +140,10 @@ def process_model(model):
                 accuracy = tp / count_classes[label]
                 precision = tp / (tp + fp_classes[label])
                 recall = tp / (tp + fn_classes[label])
-                f1 = (2 * precision * recall) / (precision + recall)
+                if precision + recall == 0:
+                    f1 = 0
+                else:
+                    f1 = (2 * precision * recall) / (precision + recall)
 
                 series_accuracy = series_accuracy.set_value(label, accuracy)
                 series_precision = series_precision.set_value(label, precision)
