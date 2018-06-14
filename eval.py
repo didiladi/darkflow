@@ -45,6 +45,8 @@ def predict(model, ckpt):
 
                 if not expected_label in tp_classes:
                     tp_classes[expected_label] = 0
+                    fp_classes[expected_label] = 0
+                    fn_classes[expected_label] = 0
                     count_classes[expected_label] = 0
 
                 count_classes[expected_label] = count_classes[expected_label] + 1
