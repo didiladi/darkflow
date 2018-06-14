@@ -41,8 +41,17 @@ class Model(object):
     def get_config(self):
         return PATH_CFG_PREFIX + self.num + PATH_CFG_SUFFIX
 
-    def get_csv(self):
-        return self.get_config() + ".csv"
+    def get_accuracy_csv(self):
+        return self.get_config() + ".accuracy.csv"
+
+    def get_precision_csv(self):
+        return self.get_config() + ".precision.csv"
+
+    def get_recall_csv(self):
+        return self.get_config() + ".recall.csv"
+
+    def get_f1_csv(self):
+        return self.get_config() + ".f1.csv"
 
     def get_labels(self):
         return PATH_LABELS_PREFIX + self.num + PATH_LABELS_SUFFIX
@@ -98,13 +107,11 @@ class Model(object):
 
         return result
 
-    def get_evaluation_data(self):
+    def get_data(self, file_path):
         ''' 
         Returns a pandas data frame, which contains the CSV file (current 
         evaluation result) of the given model 
         '''
-
-        file_path = self.get_csv()
 
         if os.path.isfile(file_path):
             return pd.read_csv(file_path, sep=',',
@@ -113,5 +120,5 @@ class Model(object):
         labels = self.read_labels()
         return pd.DataFrame(data=None, index=labels, dtype=np.float64)
 
-    def save_evaluation_data(self, data):
-        data.to_csv(self.get_csv(), sep=',', encoding='utf-8')
+    def save_data(self, data, file_path):
+        data.to_csv(file_path, sep=',', encoding='utf-8')

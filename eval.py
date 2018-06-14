@@ -24,9 +24,9 @@ def predict(model, ckpt):
     tfnet = TFNet(options)
 
     # we just count the tp since the test data only contains the labels for the one class:
-    tp = 0
-    count = 0
     tp_classes = {}
+    fp_classes = {}
+    fn_classes = {}
     count_classes = {}
 
     files = os.listdir(model.get_path_for_test_images())
@@ -47,19 +47,48 @@ def predict(model, ckpt):
                     tp_classes[expected_label] = 0
                     count_classes[expected_label] = 0
 
-                count = count + 1
                 count_classes[expected_label] = count_classes[expected_label] + 1
 
+                num_distinct_classes = 0
+                already_handled = []
+                correct_label_available = False
+
                 for obj in result:
+
                     if obj["label"] == expected_label:
-                        tp = tp + 1
-                        tp_classes[expected_label] = tp_classes[expected_label] + 1
-                        break
+                        correct_label_available
+
+                    if obj["label"] not in already_handled:
+                        already_handled.append(obj["label"])
+                        num_distinct_classes = num_distinct_classes + 1
+
+                already_handled = []
+
+                for obj in result:
+
+                    if obj["label"] not in already_handled:
+                        already_handled.append(obj["label"])
+
+                        if obj["label"] == expected_label:
+                            tp_classes[expected_label] = tp_classes[expected_label] + \
+                                1 / num_distinct_classes
+                        else:
+
+                            minus = 0
+                            if correct_label_available:
+                                minus = 1
+
+                            fp_classes[expected_label] = fp_classes[expected_label] + \
+                                (num_distinct_classes - minus) / \
+                                num_distinct_classes
+
+                if len(result) == 0:
+                    fn_classes[expected_label] = fn_classes[expected_label] + 1
 
             except AssertionError:
                 continue
 
-    return tp, count, tp_classes, count_classes
+    return tp_classes, fp_classes, fn_classes, count_classes
 
 
 def get_all_checkpoints_for_model(model):
@@ -82,7 +111,11 @@ def get_all_checkpoints_for_model(model):
 
 def process_model(model):
 
-    data = model.get_evaluation_data()
+    data_accuracy = model.get_data(model.get_accuracy_csv())
+    data_precision = model.get_data(model.get_precision_csv())
+    data_recall = model.get_data(model.get_recall_csv())
+    data_f1 = model.get_data(model.get_f1_csv())
+
     ckpts = get_all_checkpoints_for_model(model)
     labels = model.read_labels()
     start_ckpt = model.get_ckpt_start()
@@ -90,19 +123,52 @@ def process_model(model):
     for ckpt in ckpts:
         if ckpt > start_ckpt:
 
-            tp, count, tp_classes, count_classes = predict(model, ckpt)
+            tp_classes, fp_classes, fn_classes, count_classes = predict(
+                model, ckpt)
 
-            series = pd.Series(dtype=np.float64)
+            series_accuracy = pd.Series(dtype=np.float64)
+            series_precision = pd.Series(dtype=np.float64)
+            series_recall = pd.Series(dtype=np.float64)
+            series_f1 = pd.Series(dtype=np.float64)
 
             for label in labels:
-                accuracy = tp_classes[label] / count_classes[label]
-                series = series.set_value(label, accuracy)
 
-            data[str(ckpt)] = series
+                tp = tp_classes[label]
+
+                accuracy = tp / count_classes[label]
+                precision = tp / (tp + fp_classes[label])
+                recall = tp / (tp + fn_classes[label])
+                f1 = (2 * precision * recall) / (precision + recall)
+
+                series_accuracy = series_accuracy.set_value(label, accuracy)
+                series_precision = series_precision.set_value(label, precision)
+                series_recall = series_recall.set_value(label, recall)
+                series_f1 = series_f1.set_value(label, f1)
+
+            data_accuracy[str(ckpt)] = series_accuracy
+            data_precision[str(ckpt)] = series_precision
+            data_recall[str(ckpt)] = series_recall
+            data_f1[str(ckpt)] = series_f1
+
             model.write_ckpt_start(ckpt)
 
-            model.save_evaluation_data(data)
-            print(data)
+            model.save_data(data_accuracy, model.get_accuracy_csv())
+            model.save_data(data_precision, model.get_precision_csv())
+            model.save_data(data_recall, model.get_recall_csv())
+            model.save_data(data_f1, model.get_f1_csv())
+
+            print("---")
+            print("Accuracy:")
+            print(data_accuracy)
+            print("---")
+            print("Precision:")
+            print(data_precision)
+            print("---")
+            print("Recall:")
+            print(data_recall)
+            print("---")
+            print("F1:")
+            print(data_f1)
 
 
 if __name__ == '__main__':
